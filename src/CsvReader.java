@@ -5,58 +5,62 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CsvReader
-{
+public class CsvReader {
 
-    public static List<Point3D[]> read(String filename)
+    public static List<PlaneInput> read(String filename)
             throws IOException {
 
-        List<Point3D[]> planes = new ArrayList<>();
+        List<PlaneInput> planes = new ArrayList<>();
 
         List<String> lines = Files.readAllLines(
                 Path.of(filename));
 
+        int lineNumber = 0;
+
         for (String line : lines) {
+            lineNumber++;
 
             if (line.isBlank()) {
                 continue;
             }
 
-            String[] parts = line.split(",", -1);
-
-            if (parts.length != 9 && parts.length != 12) {
-                throw new IOException(
-                        "Each row must contain 9 or 12 values");
-            }
-
-            Point3D[] points = new Point3D[parts.length / 3];
-
             try {
-                for (int i = 0; i < points.length; i++) {
+                String[] parts = line.split(",", -1);
 
+                if (parts.length != 9 && parts.length != 12) {
+                    throw new IllegalArgumentException(
+                            "Expected 9 or 12 coordinates");
+                }
+
+                Point3D[] points =
+                        new Point3D[parts.length / 3];
+
+                for (int i = 0; i < points.length; i++) {
                     double x = Double.parseDouble(
                             parts[i * 3].trim());
-
                     double y = Double.parseDouble(
                             parts[i * 3 + 1].trim());
-
                     double z = Double.parseDouble(
                             parts[i * 3 + 2].trim());
 
                     if (!Double.isFinite(x) ||
                             !Double.isFinite(y) ||
                             !Double.isFinite(z)) {
-                        throw new NumberFormatException();
+                        throw new IllegalArgumentException(
+                                "Non-finite coordinate");
                     }
 
                     points[i] = new Point3D(x, y, z);
                 }
-            } catch (NumberFormatException e) {
-                throw new IOException(
-                        "Invalid coordinates in CSV", e);
-            }
 
-            planes.add(points);
+                planes.add(new PlaneInput(points, null));
+
+            } catch (IllegalArgumentException e) {
+                planes.add(new PlaneInput(
+                        null,
+                        "Line " + lineNumber + ": " +
+                                e.getMessage()));
+            }
         }
 
         return planes;
