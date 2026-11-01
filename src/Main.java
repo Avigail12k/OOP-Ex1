@@ -1,7 +1,13 @@
 
+import java.awt.image.BufferedImage;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import javax.imageio.ImageIO;
+
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         Volume3D volume = new Volume3D(6, 6, 6);
 
@@ -13,26 +19,31 @@ public class Main {
             }
         }
 
-        Point3D a1 = new Point3D(1, 1, 0);
-        Point3D a2 = new Point3D(3, 1, 0);
-        Point3D b = new Point3D(0, 4, 0);
-        Point3D c = new Point3D(4, 4, 0);
+        List<PlaneInput> planes =
+                CsvReader.read("data/planes.csv");
 
-        long[][] image = PlaneProjector.projectTrapezoid(
-                volume, a1, a2, b, c);
+        List<BufferedImage> frames =
+                FrameGenerator.generate(volume, planes);
 
-        for (long[] row : image) {
-            for (long pixel : row) {
-                System.out.printf("%4d", pixel);
-            }
-            System.out.println();
+        Files.createDirectories(Path.of("data/frames"));
+
+        for (int i = 0; i < frames.size(); i++) {
+            String filename = String.format(
+                    "data/frames/frame_%03d.png", i + 1);
+
+            ImageIO.write(frames.get(i), "png",
+                    Path.of(filename).toFile());
         }
 
-        try {
-            ImageWriter.savePng(image, "data/trapezoid.png");
-            System.out.println("Trapezoid image created!");
-        } catch (java.io.IOException e) {
-            System.out.println("Error: " + e.getMessage());
-        }
+        System.out.println(
+                "Created " + frames.size() + " frames");
+        VideoWriter.createMp4(
+                frames,
+                "data/output.mp4",
+                2
+        );
+
+        System.out.println("MP4 video created!");
+
     }
 }
