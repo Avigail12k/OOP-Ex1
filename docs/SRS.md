@@ -29,6 +29,18 @@ points in three-dimensional space.
 ### FR-03: Plane Validation
 The system shall validate each plane definition.
 
+For three-point definitions, the system shall
+reject collinear points, since they do not
+define a unique plane.
+
+For four-point definitions, the system shall
+verify that all four points are coplanar
+and satisfy the assignment's additional
+geometric constraints.
+
+The validation policy shall document how
+the tolerance EPS = 0.001 is applied.
+
 Invalid plane definitions shall raise an exception.
 The demo application shall catch these exceptions
 and continue processing subsequent planes.
@@ -67,6 +79,7 @@ shall aim for at least 100 frames per second.
 
 A rate above 30 FPS is a mandatory minimum
 according to the assignment instructions.
+
 
 ### NFR-04: Maintainability
 The implementation shall use a modular,
