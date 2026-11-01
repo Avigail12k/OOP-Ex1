@@ -30,6 +30,15 @@ public class Plane3D
             throw new IllegalArgumentException(
                     "Points do not define a valid plane");
         }
+
+        double distanceAB = ab.length();
+        double distanceAC = ac.length();
+
+        if (Math.abs(distanceAB - distanceAC) >= EPS) {
+            throw new IllegalArgumentException(
+                    "The three points must form an isosceles triangle");
+        }
+
         this.a = a;
         this.normal = n;
     }
