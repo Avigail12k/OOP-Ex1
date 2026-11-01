@@ -94,4 +94,61 @@ public class PlaneProjector {
 
         return volume.getVoxel(x, y, z);
     }
+
+    public static long[][] projectTrapezoid(
+            Volume3D volume,
+            Point3D a1, Point3D a2,
+            Point3D b, Point3D c) {
+
+        if (volume == null) {
+            throw new IllegalArgumentException(
+                    "Volume cannot be null");
+        }
+
+        Plane3D.validateFourPoints(a1, a2, b, c);
+
+        double sideLength = distance(a1, b);
+        double upperWidth = distance(a1, a2);
+        double lowerWidth = distance(b, c);
+
+        int height = Math.max(2,
+                (int) Math.ceil(sideLength) + 1);
+
+        int width = Math.max(1,
+                (int) Math.ceil(lowerWidth) + 1);
+
+        long[][] image = new long[height][width];
+
+        for (int y = 0; y < height; y++) {
+
+            double t = (double) y / (height - 1);
+
+            Point3D left = interpolate(a1, b, t);
+            Point3D right = interpolate(a2, c, t);
+
+            double rowLength = distance(left, right);
+            int samples = (int) Math.ceil(rowLength) + 1;
+
+            int startX = (width - samples) / 2;
+
+            for (int x = 0; x < samples; x++) {
+
+                double s = samples == 1
+                        ? 0
+                        : (double) x / (samples - 1);
+
+                Point3D p = interpolate(left, right, s);
+
+                int imageX = startX + x;
+
+                if (imageX >= 0 && imageX < width) {
+                    image[y][imageX] =
+                            sampleNearest(volume, p);
+                }
+            }
+        }
+
+        return image;
+    }
+
 }
