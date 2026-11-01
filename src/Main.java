@@ -18,7 +18,12 @@ public class Main
         Point3D c = new Point3D(0, 4, 0);
 
         long[][] image = PlaneProjector.project(volume, a, b, c);
-
+        try {
+            ImageWriter.savePng(image, "data/triangle.png");
+            System.out.println("Image created successfully!");
+        } catch (java.io.IOException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
         for (long[] row : image) {
             for (long pixel : row) {
                 System.out.printf("%4d", pixel);
