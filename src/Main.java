@@ -3,17 +3,9 @@ public class Main
 {
     public static void main(String[] args)
     {
-
-        Vector3D u = new Vector3D(1, 0, 0);
-        Vector3D v = new Vector3D(0, 1, 0);
-
-        Vector3D result = u.cross(v);
-
-        System.out.println(result.getX());
-        System.out.println(result.getY());
-        System.out.println(result.getZ());
-
-        System.out.println("Length: " + result.length());
-
+        Point3D a = new Point3D(0, 0, 0);
+        Point3D b = new Point3D(4, 0, 0);
+        Point3D c = new Point3D(0, 3, 0);
+        Plane3D plane = new Plane3D(a, b, c);
     }
 }
