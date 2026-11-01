@@ -1,0 +1,7 @@
+NRRD0005
+type: uint8
+dimension: 3
+sizes: 2 2 2
+encoding: ascii
+
+1 2 3 4 5 6 7 8
