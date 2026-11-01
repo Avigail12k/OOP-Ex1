@@ -3,9 +3,14 @@ public class Main
 {
     public static void main(String[] args)
     {
-        Point3D a = new Point3D(0, 0, 0);
-        Point3D b = new Point3D(4, 0, 0);
-        Point3D c = new Point3D(0, 3, 0);
-        Plane3D plane = new Plane3D(a, b, c);
+        Volume3D volume = new Volume3D(3, 3, 3);
+
+        volume.setVoxel(1, 2, 0, 150);
+
+        System.out.println(volume.getVoxel(1, 2, 0));
+        System.out.println(volume.getSizeX());
+        System.out.println(volume.getSizeY());
+        System.out.println(volume.getSizeZ());
+
     }
 }
