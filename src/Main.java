@@ -1,36 +1,26 @@
 
-public class Main
-{
-    public static void main(String[] args)
-    {
-        Volume3D volume = new Volume3D(5, 5, 5);
+import java.util.List;
+import java.io.IOException;
 
-        for (int x = 0; x < 5; x++) {
-            for (int y = 0; y < 5; y++) {
-                for (int z = 0; z < 5; z++) {
-                    volume.setVoxel(x, y, z, 100);
-                }
-            }
-        }
+public class Main {
 
-        Point3D a = new Point3D(0, 0, 0);
-        Point3D b = new Point3D(4, 0, 0);
-        Point3D c = new Point3D(0, 4, 0);
+    public static void main(String[] args) {
 
-        long[][] image = PlaneProjector.project(volume, a, b, c);
         try {
-            ImageWriter.savePng(image, "data/triangle.png");
-            System.out.println("Image created successfully!");
-        } catch (java.io.IOException e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-        for (long[] row : image) {
-            for (long pixel : row) {
-                System.out.printf("%4d", pixel);
+            List<Point3D[]> planes =
+                    CsvReader.read("data/planes.csv");
+
+            System.out.println(
+                    "Number of planes: " + planes.size());
+
+            for (Point3D[] points : planes) {
+                System.out.println(
+                        "Points in plane: " + points.length);
             }
-            System.out.println();
+
+        } catch (IOException e) {
+            System.out.println(
+                    "Error: " + e.getMessage());
         }
-
-
     }
 }
