@@ -1,47 +1,19 @@
 
-import java.io.IOException;
-import java.util.List;
-
 public class Main {
 
     public static void main(String[] args) {
 
+        Point3D a1 = new Point3D(0, 0, 0);
+        Point3D a2 = new Point3D(2, 0, 0);
+        Point3D b = new Point3D(-1, 3, 0);
+        Point3D c = new Point3D(3, 3, 0);
+
         try {
-            List<PlaneInput> planes =
-                    CsvReader.read("data/planes.csv");
+            Plane3D.validateFourPoints(a1, a2, b, c);
+            System.out.println("Valid trapezoid");
 
-            System.out.println(
-                    "Number of planes: " + planes.size());
-
-            for (PlaneInput plane : planes) {
-                if (!plane.isValid()) {
-                    System.out.println(
-                            "ERROR: " + plane.getError());
-                    continue;
-                }
-
-                try {
-                    Point3D[] p = plane.getPoints();
-
-                    if (p.length == 3) {
-                        new Plane3D(p[0], p[1], p[2]);
-                    } else {
-                        System.out.println(
-                                "Four-point validation pending");
-                        continue;
-                    }
-
-                    System.out.println("Valid plane");
-
-                } catch (IllegalArgumentException e) {
-                    System.out.println(
-                            "ERROR: " + e.getMessage());
-                }
-            }
-
-        } catch (IOException e) {
-            System.out.println(
-                    "File error: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println("ERROR: " + e.getMessage());
         }
     }
 }
