@@ -1,7 +1,6 @@
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,8 +47,8 @@ public class FrameGenerator {
             } catch (IllegalArgumentException e) {
 
                 System.out.println(
-                        "Frame " + (i + 1) + " ERROR: "
-                                + e.getMessage());
+                        "Frame " + (i + 1)
+                                + " ERROR: " + e.getMessage());
 
                 frames.add(createErrorFrame(i + 1));
             }
@@ -63,14 +62,12 @@ public class FrameGenerator {
         int sourceHeight = pixels.length;
         int sourceWidth = pixels[0].length;
 
-        // Find minimum and maximum non-zero pixel values.
         long min = Long.MAX_VALUE;
         long max = Long.MIN_VALUE;
 
-        for (int y = 0; y < sourceHeight; y++) {
-            for (int x = 0; x < sourceWidth; x++) {
-
-                long value = pixels[y][x];
+        // Find minimum and maximum non-zero values.
+        for (long[] row : pixels) {
+            for (long value : row) {
 
                 if (value == 0) {
                     continue;
@@ -86,22 +83,43 @@ public class FrameGenerator {
             }
         }
 
-        // Handle an image containing only zeros.
         if (min == Long.MAX_VALUE) {
             min = 0;
             max = 0;
         }
 
-        BufferedImage source = new BufferedImage(
-                sourceWidth,
-                sourceHeight,
+        BufferedImage frame = new BufferedImage(
+                WIDTH,
+                HEIGHT,
                 BufferedImage.TYPE_INT_RGB);
 
-        // Convert voxel values to grayscale.
-        for (int y = 0; y < sourceHeight; y++) {
-            for (int x = 0; x < sourceWidth; x++) {
+        double scale = Math.min(
+                (double) WIDTH / sourceWidth,
+                (double) HEIGHT / sourceHeight);
 
-                long value = pixels[y][x];
+        int w = Math.max(
+                1, (int) Math.round(sourceWidth * scale));
+
+        int h = Math.max(
+                1, (int) Math.round(sourceHeight * scale));
+
+        int offsetX = (WIDTH - w) / 2;
+        int offsetY = (HEIGHT - h) / 2;
+
+        // Convert directly into the final video frame.
+        for (int y = 0; y < h; y++) {
+
+            int sourceY = Math.min(
+                    sourceHeight - 1,
+                    (int) ((y + 0.5) * sourceHeight / h));
+
+            for (int x = 0; x < w; x++) {
+
+                int sourceX = Math.min(
+                        sourceWidth - 1,
+                        (int) ((x + 0.5) * sourceWidth / w));
+
+                long value = pixels[sourceY][sourceX];
                 int gray;
 
                 if (value == 0) {
@@ -112,8 +130,7 @@ public class FrameGenerator {
 
                 } else {
                     gray = (int) Math.round(
-                            255.0 * (value - min)
-                                    / (max - min));
+                            255.0 * (value - min) / (max - min));
                 }
 
                 gray = Math.max(0, Math.min(255, gray));
@@ -122,45 +139,11 @@ public class FrameGenerator {
                         | (gray << 8)
                         | gray;
 
-                source.setRGB(x, y, rgb);
+                frame.setRGB(
+                        offsetX + x,
+                        offsetY + y,
+                        rgb);
             }
-        }
-
-        // Create a fixed-size video frame.
-        BufferedImage frame = new BufferedImage(
-                WIDTH,
-                HEIGHT,
-                BufferedImage.TYPE_INT_RGB);
-
-        Graphics2D g = frame.createGraphics();
-
-        try {
-            g.setColor(Color.BLACK);
-            g.fillRect(0, 0, WIDTH, HEIGHT);
-
-            g.setRenderingHint(
-                    RenderingHints.KEY_INTERPOLATION,
-                    RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-
-            double scale = Math.min(
-                    (double) WIDTH / sourceWidth,
-                    (double) HEIGHT / sourceHeight);
-
-            int w = Math.max(
-                    1,
-                    (int) Math.round(sourceWidth * scale));
-
-            int h = Math.max(
-                    1,
-                    (int) Math.round(sourceHeight * scale));
-
-            int x = (WIDTH - w) / 2;
-            int y = (HEIGHT - h) / 2;
-
-            g.drawImage(source, x, y, w, h, null);
-
-        } finally {
-            g.dispose();
         }
 
         return frame;
@@ -180,8 +163,10 @@ public class FrameGenerator {
             g.fillRect(0, 0, WIDTH, HEIGHT);
 
             g.setColor(Color.RED);
-            g.drawString("ERROR - Invalid plane", 75, 110);
-            g.drawString("Frame: " + number, 75, 135);
+            g.drawString(
+                    "ERROR - Invalid plane", 75, 110);
+            g.drawString(
+                    "Frame: " + number, 75, 135);
 
         } finally {
             g.dispose();

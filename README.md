@@ -212,7 +212,7 @@ The Benchmark class performs warm-up operations followed by 100 projection repet
 |---|---|---|---|---|
 | MRI | 256 x 256 x 130 | 100 | 0.0164 s | 6107.23 |
 | Synthetic volume | 300 x 300 x 300 | 100 | 0.0197 s | 5081.61 |
-
+| Synthetic volume | 500 x 500 x 500 | 100 | 0.0439 s | 2278.80 |
 These results measure projection computations only.
 
 They exclude image rendering, MP4 encoding, and file loading.
@@ -236,12 +236,36 @@ Additional documents are located in the `docs` directory:
 - `Algorithm.md` - Projection algorithm description.
 - `Design.md` - Object-oriented software design.
 - `Experiment.md` - Testing strategy and experimental results.
+
 ## Known Limitations
 
-- Performance on a 500 x 500 x 500 dataset has not yet been measured.
-- End-to-end rendering and video encoding performance requires further evaluation.
-- Grayscale normalization is intended for visualization and can vary between frames.
-- The NRRD reader implements a supported subset of the NRRD specification.
+- Projection-only performance was measured on a
+  500 x 500 x 500 synthetic volume, but full
+  end-to-end performance above 30 FPS has not
+  yet been demonstrated.
+- Image rendering and MP4 encoding require
+  separate performance evaluation.
+- Grayscale normalization may vary between frames.
+- The NRRD reader implements a supported subset
+  of the complete NRRD specification.
+- The MRI dataset is stored locally and is not
+  included in the GitHub repository.
+
+### Building with IntelliJ IDEA
+
+Open the project in IntelliJ IDEA and import
+it as a Maven project.
+
+Select JDK 21.
+
+Open the Maven tool window and run:
+
+Lifecycle -> clean
+Lifecycle -> compile
+
+The project can then be executed using an
+Application run configuration with Main as
+the main class.
 
 ## Academic Context
 
