@@ -8,8 +8,15 @@ public class Benchmark {
 
         System.out.println("Loading MRI...");
 
-        Volume3D volume =
-                NrrdReader.read("data/MRHead_1.nrrd");
+        Volume3D volume = new Volume3D(300, 300, 300);
+
+        for (int z = 0; z < 300; z++) {
+            for (int y = 0; y < 300; y++) {
+                for (int x = 0; x < 300; x++) {
+                    volume.setVoxel(x, y, z, x + y + z);
+                }
+            }
+        }
 
         Point3D a = new Point3D(128, 40, 65);
         Point3D b = new Point3D(40, 215, 65);
