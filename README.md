@@ -235,7 +235,7 @@ Additional documents are located in the `docs` directory:
 - `SRS.md` - Software Requirements Specification.
 - `Algorithm.md` - Projection algorithm description.
 - `Design.md` - Object-oriented software design.
-
+- `Experiment.md` - Testing strategy and experimental results.
 ## Known Limitations
 
 - Performance on a 500 x 500 x 500 dataset has not yet been measured.
