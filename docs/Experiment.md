@@ -216,6 +216,35 @@ Elapsed time: 0.0197 seconds
 
 Projection rate: 5081.61 projections/second
 
+
+### Experiment C: Large Synthetic Volume
+
+Volume dimensions: 500 x 500 x 500
+
+Voxel value formula: x + y + z
+
+Projection dimensions: 449 x 401
+
+Warm-up repetitions: 20
+
+Measured projections: 100
+
+Elapsed projection time: 0.0439 seconds
+
+Measured projection throughput: 2278.80 projections/second
+
+Checksum: 75000
+
+The benchmark completed successfully with exit code 0.
+
+This experiment confirms that the projection algorithm
+can process the tested 500 x 500 x 500 volume
+at a rate above 30 projections per second.
+
+The measurement excludes image rendering, file loading,
+and MP4 video encoding.
+
+
 ### Results Summary
 
 | Experiment | Volume dimensions | Projections | Time | Projection rate |
@@ -275,7 +304,6 @@ for very large CSV input files.
 
 The current experiment has the following limitations:
 
-- The 500 x 500 x 500 workload was not measured.
 - Performance tests reused the same projection.
 - End-to-end video encoding throughput was not measured.
 - Detailed hardware specifications were not recorded.
