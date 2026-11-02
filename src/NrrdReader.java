@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.zip.GZIPInputStream;
 
 public class NrrdReader {
 
@@ -17,6 +18,7 @@ public class NrrdReader {
                 Files.newInputStream(Path.of(filename)))) {
 
             String magic = readLine(input);
+
             if (magic == null || !magic.matches("NRRD\\d{4}")) {
                 throw new IOException("Invalid NRRD file");
             }
@@ -32,11 +34,14 @@ public class NrrdReader {
                 }
 
                 int colon = line.indexOf(':');
+
                 if (colon >= 0) {
                     String key = line.substring(0, colon)
                             .trim().toLowerCase(Locale.ROOT);
+
                     String value = line.substring(colon + 1)
                             .trim().toLowerCase(Locale.ROOT);
+
                     header.put(key, value);
                 }
             }
@@ -49,23 +54,38 @@ public class NrrdReader {
                 throw new IOException("Expected 3D volume");
             }
 
-            int bytesPerVoxel = getBytesPerVoxel(
-                    header.get("type"));
+            String type = header.get("type");
+
+            int bytesPerVoxel = getBytesPerVoxel(type);
+
+            boolean signedShort =
+                    "short".equals(type)
+                            || "int16".equals(type)
+                            || "signed short".equals(type);
 
             String encoding = header.get("encoding");
-            if (!"raw".equals(encoding)
-                    && !"ascii".equals(encoding)
-                    && !"text".equals(encoding)
-                    && !"txt".equals(encoding)) {
-                throw new IOException("Unsupported encoding");
+
+            boolean isRaw = "raw".equals(encoding);
+            boolean isGzip = "gzip".equals(encoding)
+                    || "gz".equals(encoding);
+
+            boolean isAscii = "ascii".equals(encoding)
+                    || "text".equals(encoding)
+                    || "txt".equals(encoding);
+
+            if (!isRaw && !isGzip && !isAscii) {
+                throw new IOException(
+                        "Unsupported encoding: " + encoding);
             }
 
             String sizes = header.get("sizes");
+
             if (sizes == null) {
                 throw new IOException("Missing sizes");
             }
 
-            String[] parts = sizes.split("\\s+");
+            String[] parts = sizes.trim().split("\\s+");
+
             if (parts.length != 3) {
                 throw new IOException("Invalid dimensions");
             }
@@ -77,19 +97,23 @@ public class NrrdReader {
                 sy = Integer.parseInt(parts[1]);
                 sz = Integer.parseInt(parts[2]);
             } catch (NumberFormatException e) {
-                throw new IOException("Invalid volume sizes", e);
+                throw new IOException(
+                        "Invalid volume sizes", e);
             }
 
             Volume3D volume;
+
             try {
                 volume = new Volume3D(sx, sy, sz);
             } catch (IllegalArgumentException e) {
-                throw new IOException("Invalid volume dimensions", e);
+                throw new IOException(
+                        "Invalid volume dimensions", e);
             }
 
             boolean littleEndian = true;
 
-            if ("raw".equals(encoding) && bytesPerVoxel > 1) {
+            if (!isAscii && bytesPerVoxel > 1) {
+
                 String endian = header.get("endian");
 
                 if (!"little".equals(endian)
@@ -101,45 +125,86 @@ public class NrrdReader {
                 littleEndian = "little".equals(endian);
             }
 
-            Scanner scanner = null;
-            if (!"raw".equals(encoding)) {
-                scanner = new Scanner(
-                        input, StandardCharsets.US_ASCII);
-                scanner.useLocale(Locale.ROOT);
+            InputStream dataInput = input;
+
+            if (isGzip) {
+                dataInput = new GZIPInputStream(input);
             }
 
-            long maximum = (1L << (bytesPerVoxel * 8)) - 1;
+            try {
+                Scanner scanner = null;
 
-            for (int z = 0; z < sz; z++) {
-                for (int y = 0; y < sy; y++) {
-                    for (int x = 0; x < sx; x++) {
+                if (isAscii) {
+                    scanner = new Scanner(
+                            dataInput,
+                            StandardCharsets.US_ASCII);
 
-                        long value;
+                    scanner.useLocale(Locale.ROOT);
+                }
 
-                        if (scanner != null) {
-                            if (!scanner.hasNextLong()) {
-                                throw new IOException(
-                                        "Invalid or incomplete ASCII data");
+                long maximum =
+                        (1L << (bytesPerVoxel * 8)) - 1;
+
+                for (int z = 0; z < sz; z++) {
+                    for (int y = 0; y < sy; y++) {
+                        for (int x = 0; x < sx; x++) {
+
+                            long value;
+
+                            if (scanner != null) {
+
+                                if (!scanner.hasNextLong()) {
+                                    throw new IOException(
+                                            "Invalid or incomplete ASCII data");
+                                }
+
+                                value = scanner.nextLong();
+
+                            } else {
+
+                                value = readUnsigned(
+                                        dataInput,
+                                        bytesPerVoxel,
+                                        littleEndian);
                             }
 
-                            value = scanner.nextLong();
-                        } else {
-                            value = readUnsigned(
-                                    input, bytesPerVoxel,
-                                    littleEndian);
-                        }
+                            if (signedShort) {
 
-                        if (value < 0 || value > maximum) {
-                            throw new IOException(
-                                    "Voxel value out of range");
-                        }
+                                if (scanner == null) {
+                                    if (value >= 32768) {
+                                        value -= 65536;
+                                    }
+                                }
 
-                        volume.setVoxel(x, y, z, value);
+                                if (value < -32768
+                                        || value > 32767) {
+                                    throw new IOException(
+                                            "Signed short value out of range");
+                                }
+
+                                value += 32768;
+
+                            } else {
+
+                                if (value < 0
+                                        || value > maximum) {
+                                    throw new IOException(
+                                            "Voxel value out of range");
+                                }
+                            }
+
+                            volume.setVoxel(x, y, z, value);
+                        }
                     }
                 }
-            }
 
-            return volume;
+                return volume;
+
+            } finally {
+                if (isGzip) {
+                    dataInput.close();
+                }
+            }
         }
     }
 
@@ -151,21 +216,28 @@ public class NrrdReader {
         }
 
         return switch (type) {
+
             case "uint8", "uchar", "unsigned char" -> 1;
-            case "uint16", "ushort", "unsigned short" -> 2;
+
+            case "uint16", "ushort", "unsigned short",
+                 "short", "int16", "signed short" -> 2;
+
             case "uint32", "uint", "unsigned int" -> 4;
+
             default -> throw new IOException(
                     "Unsupported data type: " + type);
         };
     }
 
     private static long readUnsigned(
-            InputStream input, int count,
+            InputStream input,
+            int count,
             boolean littleEndian) throws IOException {
 
         long value = 0;
 
         for (int i = 0; i < count; i++) {
+
             int b = input.read();
 
             if (b == -1) {
@@ -190,13 +262,16 @@ public class NrrdReader {
                 new ByteArrayOutputStream();
 
         int b;
+
         while ((b = input.read()) != -1) {
+
             if (b == '\n') {
                 break;
             }
 
             if (buffer.size() >= 65536) {
-                throw new IOException("Header line too long");
+                throw new IOException(
+                        "Header line too long");
             }
 
             buffer.write(b);

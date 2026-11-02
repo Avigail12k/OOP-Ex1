@@ -25,8 +25,19 @@ public class Main {
         List<PlaneInput> planes = CsvReader.read(csvFile);
 
         System.out.println("Generating frames...");
+
+        long startTime = System.nanoTime();
+
         List<BufferedImage> frames =
                 FrameGenerator.generate(volume, planes);
+
+        long endTime = System.nanoTime();
+
+        double seconds = (endTime - startTime) / 1_000_000_000.0;
+        double fps = frames.size() / seconds;
+
+        System.out.printf("Projection time: %.4f seconds%n", seconds);
+        System.out.printf("Processing FPS: %.2f%n", fps);
 
         Path outputPath = Path.of(mp4File);
         Path parent = outputPath.toAbsolutePath().getParent();

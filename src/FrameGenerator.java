@@ -46,6 +46,7 @@ public class FrameGenerator {
                 frames.add(createImage(pixels));
 
             } catch (IllegalArgumentException e) {
+
                 System.out.println(
                         "Frame " + (i + 1) + " ERROR: "
                                 + e.getMessage());
@@ -62,25 +63,74 @@ public class FrameGenerator {
         int sourceHeight = pixels.length;
         int sourceWidth = pixels[0].length;
 
-        BufferedImage source = new BufferedImage(
-                sourceWidth, sourceHeight,
-                BufferedImage.TYPE_INT_RGB);
+        // Find minimum and maximum non-zero pixel values.
+        long min = Long.MAX_VALUE;
+        long max = Long.MIN_VALUE;
 
         for (int y = 0; y < sourceHeight; y++) {
             for (int x = 0; x < sourceWidth; x++) {
 
-                int gray = (int) Math.max(0,
-                        Math.min(255, pixels[y][x]));
+                long value = pixels[y][x];
 
-                int rgb = (gray << 16) |
-                        (gray << 8) | gray;
+                if (value == 0) {
+                    continue;
+                }
+
+                if (value < min) {
+                    min = value;
+                }
+
+                if (value > max) {
+                    max = value;
+                }
+            }
+        }
+
+        // Handle an image containing only zeros.
+        if (min == Long.MAX_VALUE) {
+            min = 0;
+            max = 0;
+        }
+
+        BufferedImage source = new BufferedImage(
+                sourceWidth,
+                sourceHeight,
+                BufferedImage.TYPE_INT_RGB);
+
+        // Convert voxel values to grayscale.
+        for (int y = 0; y < sourceHeight; y++) {
+            for (int x = 0; x < sourceWidth; x++) {
+
+                long value = pixels[y][x];
+                int gray;
+
+                if (value == 0) {
+                    gray = 0;
+
+                } else if (max == min) {
+                    gray = 128;
+
+                } else {
+                    gray = (int) Math.round(
+                            255.0 * (value - min)
+                                    / (max - min));
+                }
+
+                gray = Math.max(0, Math.min(255, gray));
+
+                int rgb = (gray << 16)
+                        | (gray << 8)
+                        | gray;
 
                 source.setRGB(x, y, rgb);
             }
         }
 
+        // Create a fixed-size video frame.
         BufferedImage frame = new BufferedImage(
-                WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
+                WIDTH,
+                HEIGHT,
+                BufferedImage.TYPE_INT_RGB);
 
         Graphics2D g = frame.createGraphics();
 
@@ -96,11 +146,13 @@ public class FrameGenerator {
                     (double) WIDTH / sourceWidth,
                     (double) HEIGHT / sourceHeight);
 
-            int w = Math.max(1, (int) Math.round(
-                    sourceWidth * scale));
+            int w = Math.max(
+                    1,
+                    (int) Math.round(sourceWidth * scale));
 
-            int h = Math.max(1, (int) Math.round(
-                    sourceHeight * scale));
+            int h = Math.max(
+                    1,
+                    (int) Math.round(sourceHeight * scale));
 
             int x = (WIDTH - w) / 2;
             int y = (HEIGHT - h) / 2;
@@ -117,7 +169,9 @@ public class FrameGenerator {
     private static BufferedImage createErrorFrame(int number) {
 
         BufferedImage frame = new BufferedImage(
-                WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
+                WIDTH,
+                HEIGHT,
+                BufferedImage.TYPE_INT_RGB);
 
         Graphics2D g = frame.createGraphics();
 
