@@ -250,6 +250,18 @@ Additional documents are located in the `docs` directory:
   of the complete NRRD specification.
 - The MRI dataset is stored locally and is not
   included in the GitHub repository.
+  
+### Demonstration Video
+
+The MRI demonstration video is included in the repository:
+
+[Watch / Download MRI Demo](data/mri_demo.mp4)
+
+The corresponding input files are:
+
+- `data/MRHead_1.nrrd`
+- `data/mri_planes.csv`
+
 
 ### Building with IntelliJ IDEA
 
